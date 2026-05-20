@@ -1,0 +1,14 @@
+C:\Users\MacbookPro\OneDrive - ekburapa\Pictures\TypeBar\keyboard-hook\bin\Debug\net8.0\TypeBarHook.exe
+C:\Users\MacbookPro\OneDrive - ekburapa\Pictures\TypeBar\keyboard-hook\bin\Debug\net8.0\TypeBarHook.deps.json
+C:\Users\MacbookPro\OneDrive - ekburapa\Pictures\TypeBar\keyboard-hook\bin\Debug\net8.0\TypeBarHook.runtimeconfig.json
+C:\Users\MacbookPro\OneDrive - ekburapa\Pictures\TypeBar\keyboard-hook\bin\Debug\net8.0\TypeBarHook.dll
+C:\Users\MacbookPro\OneDrive - ekburapa\Pictures\TypeBar\keyboard-hook\bin\Debug\net8.0\TypeBarHook.pdb
+C:\Users\MacbookPro\OneDrive - ekburapa\Pictures\TypeBar\keyboard-hook\obj\Debug\net8.0\TypeBarHook.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\MacbookPro\OneDrive - ekburapa\Pictures\TypeBar\keyboard-hook\obj\Debug\net8.0\TypeBarHook.AssemblyInfoInputs.cache
+C:\Users\MacbookPro\OneDrive - ekburapa\Pictures\TypeBar\keyboard-hook\obj\Debug\net8.0\TypeBarHook.AssemblyInfo.cs
+C:\Users\MacbookPro\OneDrive - ekburapa\Pictures\TypeBar\keyboard-hook\obj\Debug\net8.0\TypeBarHook.csproj.CoreCompileInputs.cache
+C:\Users\MacbookPro\OneDrive - ekburapa\Pictures\TypeBar\keyboard-hook\obj\Debug\net8.0\TypeBarHook.dll
+C:\Users\MacbookPro\OneDrive - ekburapa\Pictures\TypeBar\keyboard-hook\obj\Debug\net8.0\refint\TypeBarHook.dll
+C:\Users\MacbookPro\OneDrive - ekburapa\Pictures\TypeBar\keyboard-hook\obj\Debug\net8.0\TypeBarHook.pdb
+C:\Users\MacbookPro\OneDrive - ekburapa\Pictures\TypeBar\keyboard-hook\obj\Debug\net8.0\TypeBarHook.genruntimeconfig.cache
+C:\Users\MacbookPro\OneDrive - ekburapa\Pictures\TypeBar\keyboard-hook\obj\Debug\net8.0\ref\TypeBarHook.dll

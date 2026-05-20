@@ -1,0 +1,81 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  
+  --color-overlay: var(--border-overlay);
+  --color-accent: var(--accent-color);
+  --color-accent-glow: var(--accent-glow);
+  
+  --shadow-xl: var(--glow-shadow);
+}
+
+:root {
+  /* Default Light Glass Theme - Frosted Glass ("Light mode round") */
+  --bg-overlay: rgba(255, 255, 255, 0.65);
+  --border-overlay: rgba(255, 255, 255, 0.45);
+  --text-primary: #1d1d1f;
+  --text-secondary: #4b5563; /* Tailwind gray-600 */
+  --accent-color: #3b82f6; /* Modern royal blue */
+  --accent-glow: rgba(59, 130, 246, 0.25);
+  --glow-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.03), inset 0 1px 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.dark {
+  /* Dark Glass Theme */
+  --bg-overlay: rgba(18, 18, 20, 0.7);
+  --border-overlay: rgba(255, 255, 255, 0.08);
+  --text-primary: #f5f5f7;
+  --text-secondary: #9ca3af; /* Tailwind gray-400 */
+  --accent-color: #a855f7; /* Vibrant purple */
+  --accent-glow: rgba(168, 85, 247, 0.3);
+  --glow-shadow: 0 15px 30px -10px rgba(0, 0, 0, 0.4), inset 0 1px 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.cyberpunk {
+  /* Cyberpunk Glass Theme */
+  --bg-overlay: rgba(8, 6, 16, 0.85);
+  --border-overlay: rgba(0, 242, 254, 0.3);
+  --text-primary: #00f2fe; /* Bright Cyan */
+  --text-secondary: #a855f7;
+  --accent-color: #ff007f; /* Cyberpunk pink-red */
+  --accent-glow: rgba(255, 0, 127, 0.4);
+  --glow-shadow: 0 0 12px rgba(0, 242, 254, 0.25), 0 0 20px rgba(255, 0, 127, 0.15), inset 0 1px 0 0 rgba(0, 242, 254, 0.35);
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background: transparent !important;
+  overflow: hidden;
+  font-family: var(--font-sans);
+  color: var(--text-primary);
+}
+
+/* Custom utilities that pull variables from themes */
+.bg-overlay {
+  background-color: var(--bg-overlay);
+}
+
+.text-primary {
+  color: var(--text-primary);
+}
+
+.text-secondary {
+  color: var(--text-secondary);
+}
+
+/* Custom Scrollbar and hide utilities */
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+input[type="range"]::-webkit-slider-runnable-track {
+  background: rgba(var(--text-primary), 0.1);
+  height: 4px;
+  border-radius: 9999px;
+}

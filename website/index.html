@@ -1,0 +1,2119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TypeBar - Futuristic Floating Smart Typing Overlay</title>
+  <meta name="description" content="TypeBar is a responsive, ultra-low latency typing assistant overlay for Windows. Experience instant word prediction, typo auto-correction, and interactive typing stats.">
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  
+  <style>
+    /* Reset and variables */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    :root {
+      /* Palette */
+      --bg-dark: #070913;
+      --bg-card: rgba(13, 17, 34, 0.7);
+      --border-card: rgba(255, 255, 255, 0.05);
+      
+      --purple: #863bff;
+      --purple-glow: rgba(134, 59, 255, 0.15);
+      --blue: #3b82f6;
+      --blue-glow: rgba(59, 130, 246, 0.15);
+      --cyan: #00f2fe;
+      --pink: #ff007f;
+      --pink-glow: rgba(255, 0, 127, 0.2);
+      
+      --text-white: #f3f4f6;
+      --text-gray: #9ca3af;
+      --text-dim: #6b7280;
+      
+      --transition-base: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      
+      /* App Simulation Themes */
+      --sim-light-bg: rgba(255, 255, 255, 0.7);
+      --sim-light-border: rgba(255, 255, 255, 0.45);
+      --sim-light-text: #1d1d1f;
+      --sim-light-text-sec: #4b5563;
+      --sim-light-accent: #3b82f6;
+      --sim-light-glow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), inset 0 1px 1px 0 rgba(255, 255, 255, 0.8);
+
+      --sim-dark-bg: rgba(18, 18, 20, 0.75);
+      --sim-dark-border: rgba(255, 255, 255, 0.08);
+      --sim-dark-text: #f5f5f7;
+      --sim-dark-text-sec: #9ca3af;
+      --sim-dark-accent: #a855f7;
+      --sim-dark-glow: 0 15px 30px -10px rgba(0, 0, 0, 0.4), inset 0 1px 1px 0 rgba(255, 255, 255, 0.05);
+
+      --sim-cyber-bg: rgba(8, 6, 16, 0.88);
+      --sim-cyber-border: rgba(0, 242, 254, 0.35);
+      --sim-cyber-text: #00f2fe;
+      --sim-cyber-text-sec: #a855f7;
+      --sim-cyber-accent: #ff007f;
+      --sim-cyber-glow: 0 0 12px rgba(0, 242, 254, 0.25), 0 0 20px rgba(255, 0, 127, 0.15), inset 0 1px 0 0 rgba(0, 242, 254, 0.35);
+    }
+    
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-white);
+      font-family: 'Inter', system-ui, sans-serif;
+      line-height: 1.6;
+      overflow-x: hidden;
+      background-image: 
+        radial-gradient(circle at 10% 20%, rgba(134, 59, 255, 0.08) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(59, 130, 246, 0.06) 0%, transparent 40%);
+    }
+    
+    /* Typography */
+    h1, h2, h3, h4 {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    
+    /* Layout Container */
+    .container {
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+    
+    /* Navigation */
+    header {
+      padding: 24px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background-color: rgba(7, 9, 19, 0.8);
+      backdrop-filter: blur(12px);
+    }
+    header .container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--text-white);
+    }
+    .logo-svg {
+      width: 32px;
+      height: 32px;
+    }
+    .logo-text {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, var(--text-white) 30%, var(--cyan) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+    }
+    .nav-links a {
+      color: var(--text-gray);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      transition: var(--transition-base);
+    }
+    .nav-links a:hover {
+      color: var(--text-white);
+    }
+    .btn-download-sm {
+      background: linear-gradient(135deg, var(--purple) 0%, var(--blue) 100%);
+      color: var(--text-white) !important;
+      padding: 8px 16px;
+      border-radius: 9999px;
+      font-size: 13px !important;
+      font-weight: 600 !important;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 4px 12px rgba(134, 59, 255, 0.2);
+    }
+    .btn-download-sm:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(134, 59, 255, 0.35);
+    }
+    
+    /* Hero Section */
+    .hero {
+      padding: 80px 0 60px 0;
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 48px;
+      align-items: center;
+    }
+    
+    @media (max-width: 968px) {
+      .hero {
+        grid-template-columns: 1fr;
+        gap: 60px;
+        padding-top: 40px;
+      }
+    }
+    
+    .hero-content h1 {
+      font-size: 56px;
+      line-height: 1.1;
+      margin-bottom: 24px;
+      background: linear-gradient(135deg, #fff 40%, rgba(255, 255, 255, 0.7) 70%, var(--purple) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .hero-content p {
+      font-size: 18px;
+      color: var(--text-gray);
+      margin-bottom: 32px;
+      max-width: 520px;
+    }
+    .hero-btns {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--purple) 0%, var(--blue) 100%);
+      color: var(--text-white);
+      padding: 14px 28px;
+      border-radius: 12px;
+      font-weight: 600;
+      text-decoration: none;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      box-shadow: 0 8px 24px var(--purple-glow);
+      transition: var(--transition-base);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 30px rgba(134, 59, 255, 0.35);
+    }
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--text-white);
+      padding: 14px 28px;
+      border-radius: 12px;
+      font-weight: 600;
+      text-decoration: none;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      transition: var(--transition-base);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.07);
+      border-color: rgba(255, 255, 255, 0.1);
+      transform: translateY(-2px);
+    }
+    
+    .cli-box {
+      background-color: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      max-width: 420px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .cli-text {
+      color: var(--cyan);
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+    .cli-text span {
+      color: var(--text-dim);
+    }
+    .cli-copy {
+      background: none;
+      border: none;
+      color: var(--text-gray);
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 4px;
+      transition: var(--transition-base);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .cli-copy:hover {
+      color: var(--text-white);
+      background-color: rgba(255, 255, 255, 0.08);
+    }
+    
+    /* Interactive Simulator */
+    .simulator-container {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-card);
+      border-radius: 20px;
+      padding: 24px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      backdrop-filter: blur(12px);
+    }
+    .simulator-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .window-dots {
+      display: flex;
+      gap: 6px;
+    }
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 55%;
+    }
+    .dot-red { background-color: #ff5f56; }
+    .dot-yellow { background-color: #ffbd2e; }
+    .dot-green { background-color: #27c93f; }
+    
+    .target-app-selector {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      color: var(--text-white);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      outline: none;
+    }
+    
+    .sim-tab-btn {
+      background: none;
+      border: none;
+      color: var(--text-gray);
+      padding: 4px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 10px;
+      transition: var(--transition-base);
+    }
+    .sim-tab-btn.active {
+      background: var(--purple);
+      color: white;
+    }
+    
+    .mock-editor-pane {
+      background-color: rgba(0, 0, 0, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.03);
+      border-radius: 12px;
+      padding: 16px;
+      position: relative;
+      min-height: 220px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .mock-textarea {
+      width: 100%;
+      background: none;
+      border: none;
+      color: var(--text-white);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      resize: none;
+      height: 120px;
+      outline: none;
+    }
+    .mock-textarea::placeholder {
+      color: var(--text-dim);
+      font-style: italic;
+    }
+    
+    /* Screenshot Wrapper style */
+    .mock-screenshot-view {
+      position: absolute;
+      inset: 0;
+      background-color: #000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 15;
+    }
+    .mock-screenshot-view img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    
+    /* Virtual TypeBar Element */
+    .virtual-typebar {
+      height: 64px;
+      width: 90%;
+      position: absolute;
+      bottom: 16px;
+      left: 5%;
+      border-radius: 32px;
+      border: 1px solid var(--border-overlay);
+      background-color: var(--bg-overlay);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      box-shadow: var(--glow-shadow);
+      z-index: 10;
+      transition: var(--transition-base);
+    }
+    
+    /* Simulated UI Themes */
+    .vbar-theme-light {
+      --bg-overlay: rgba(255, 255, 255, 0.7);
+      --border-overlay: rgba(255, 255, 255, 0.45);
+      --t-primary: #1d1d1f;
+      --t-secondary: #4b5563;
+      --accent: #3b82f6;
+      --glow-shadow: var(--sim-light-glow);
+    }
+    .vbar-theme-dark {
+      --bg-overlay: rgba(18, 18, 20, 0.75);
+      --border-overlay: rgba(255, 255, 255, 0.08);
+      --t-primary: #f5f5f7;
+      --t-secondary: #9ca3af;
+      --accent: #a855f7;
+      --glow-shadow: var(--sim-dark-glow);
+    }
+    .vbar-theme-cyberpunk {
+      --bg-overlay: rgba(8, 6, 16, 0.88);
+      --border-overlay: rgba(0, 242, 254, 0.35);
+      --t-primary: #00f2fe;
+      --t-secondary: #a855f7;
+      --accent: #ff007f;
+      --glow-shadow: var(--sim-cyber-glow);
+    }
+    
+    /* TypeBar Components */
+    .vbar-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-right: 1px solid rgba(128,128,128,0.15);
+      padding-right: 12px;
+      flex-shrink: 0;
+    }
+    .wpm-gauge {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(128,128,128,0.06);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    .wpm-gauge svg {
+      width: 16px;
+      height: 16px;
+      color: var(--accent);
+      transition: transform 0.2s ease;
+    }
+    .wpm-gauge.flaming svg {
+      color: #ff5a1f;
+      animation: flame-pulse 0.6s infinite alternate;
+    }
+    .wpm-badge {
+      position: absolute;
+      top: -3px;
+      right: -3px;
+      background-color: var(--accent);
+      color: white;
+      font-size: 8px;
+      font-weight: 800;
+      padding: 1px 3px;
+      border-radius: 8px;
+      min-width: 12px;
+      text-align: center;
+    }
+    
+    .vbar-app-det {
+      display: flex;
+      flex-direction: column;
+    }
+    .vbar-app-det span:first-child {
+      font-size: 7px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      font-weight: 700;
+      color: var(--t-secondary);
+    }
+    .vbar-app-det span:last-child {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--t-primary);
+      max-width: 60px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    
+    .vbar-center {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+      gap: 8px;
+      overflow: hidden;
+    }
+    .vbar-buffer {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      border-right: 1px solid rgba(128,128,128,0.08);
+      padding-right: 8px;
+      flex-shrink: 0;
+    }
+    .vbar-buffer-text {
+      font-size: 10px;
+      font-weight: 700;
+      font-style: italic;
+      color: var(--t-primary);
+      max-width: 60px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .vbar-pulse {
+      width: 4px;
+      height: 4px;
+      background-color: var(--accent);
+      border-radius: 50%;
+      animation: ping 1s infinite;
+    }
+    
+    /* Scrollable Capsules list */
+    .vbar-capsules {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      flex: 1;
+      padding: 2px 0;
+    }
+    .vbar-capsules::-webkit-scrollbar {
+      display: none;
+    }
+    
+    .capsule {
+      background: rgba(128,128,128,0.06);
+      border: 1px solid rgba(128,128,128,0.1);
+      border-radius: 12px;
+      padding: 4px 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: var(--transition-base);
+      flex-shrink: 0;
+    }
+    .capsule:hover {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+    .capsule:hover span, .capsule:hover label {
+      color: white !important;
+    }
+    .capsule-text {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--t-primary);
+    }
+    .capsule-shortcut {
+      font-size: 7px;
+      font-weight: 700;
+      color: var(--t-secondary);
+      opacity: 0.6;
+      background: rgba(128,128,128,0.12);
+      padding: 1px 3px;
+      border-radius: 3px;
+    }
+    .capsule.autocorrect-capsule {
+      border: 1px solid var(--accent);
+      background: rgba(134, 59, 255, 0.05);
+    }
+    
+    .vbar-right {
+      border-left: 1px solid rgba(128,128,128,0.15);
+      padding-left: 12px;
+      display: flex;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .settings-trigger {
+      background: none;
+      border: none;
+      color: var(--t-secondary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 6px;
+      border-radius: 50%;
+      transition: var(--transition-base);
+    }
+    .settings-trigger:hover {
+      color: var(--accent);
+      background: rgba(128,128,128,0.08);
+      transform: rotate(45deg);
+    }
+    
+    /* Virtual Settings Overlay */
+    .vbar-settings-overlay {
+      position: absolute;
+      top: 16px;
+      left: 5%;
+      width: 90%;
+      background: var(--bg-overlay);
+      border: 1px solid var(--border-overlay);
+      border-radius: 16px;
+      padding: 16px;
+      color: var(--t-primary);
+      box-shadow: var(--glow-shadow);
+      display: none; /* toggled via JS */
+      flex-direction: column;
+      gap: 12px;
+      z-index: 20;
+      backdrop-filter: blur(18px);
+      transition: var(--transition-base);
+    }
+    .settings-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(128,128,128,0.12);
+      padding-bottom: 6px;
+    }
+    .settings-title button {
+      background: rgba(128,128,128,0.1);
+      border: none;
+      color: var(--t-primary);
+      font-size: 8px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      text-transform: uppercase;
+    }
+    .settings-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .setting-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--t-secondary);
+    }
+    
+    /* Toggle switch style */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 28px;
+      height: 16px;
+    }
+    .switch input { 
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(128,128,128,0.2);
+      transition: .3s;
+      border-radius: 16px;
+    }
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 12px;
+      width: 12px;
+      left: 2px;
+      bottom: 2px;
+      background-color: white;
+      transition: .3s;
+      border-radius: 50%;
+    }
+    input:checked + .slider {
+      background-color: var(--accent);
+    }
+    input:checked + .slider:before {
+      transform: translateX(12px);
+    }
+    
+    .setting-sliders {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      border-top: 1px solid rgba(128,128,128,0.12);
+      padding-top: 8px;
+    }
+    .slider-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 9px;
+      font-weight: 600;
+      color: var(--t-secondary);
+    }
+    .slider-row span:first-child {
+      width: 90px;
+    }
+    .slider-row input[type="range"] {
+      flex: 1;
+      height: 3px;
+      background: rgba(128,128,128,0.2);
+      outline: none;
+      accent-color: var(--accent);
+    }
+    .slider-row span:last-child {
+      width: 24px;
+      text-align: right;
+      color: var(--t-primary);
+      font-weight: 700;
+    }
+    
+    /* Virtual Keyboard Visualizer */
+    .virtual-keyboard {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: 12px;
+      background-color: rgba(0, 0, 0, 0.15);
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.02);
+    }
+    .kb-row {
+      display: flex;
+      justify-content: center;
+      gap: 4px;
+    }
+    .kb-key {
+      height: 24px;
+      min-width: 20px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      border-radius: 4px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 8px;
+      font-weight: 600;
+      color: var(--text-gray);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: var(--transition-base);
+    }
+    .kb-key.key-active {
+      background: var(--purple);
+      border-color: var(--purple);
+      color: white;
+      transform: scale(0.95);
+      box-shadow: 0 0 10px var(--purple-glow);
+    }
+    .kb-key.space-key {
+      width: 90px;
+    }
+    .kb-key.tab-key {
+      width: 32px;
+    }
+    .kb-key.enter-key {
+      width: 34px;
+    }
+    
+    /* Pipeline Event Flow Section */
+    .pipeline-section {
+      padding: 80px 0;
+      background-color: rgba(0, 0, 0, 0.15);
+      border-top: 1px solid rgba(255, 255, 255, 0.02);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+    }
+    .pipeline-title {
+      text-align: center;
+      margin-bottom: 50px;
+    }
+    .pipeline-title h2 {
+      font-size: 36px;
+      margin-bottom: 10px;
+    }
+    .pipeline-title p {
+      color: var(--text-gray);
+      font-size: 15px;
+    }
+    
+    .pipeline-container {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 48px;
+      align-items: center;
+    }
+    @media (max-width: 968px) {
+      .pipeline-container {
+        grid-template-columns: 1fr;
+        gap: 40px;
+      }
+    }
+    
+    .pipeline-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+    
+    .pipeline-node {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-card);
+      border-radius: 16px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      position: relative;
+    }
+    .pipeline-node h3 {
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .pipeline-node p {
+      font-size: 13.5px;
+      color: var(--text-gray);
+    }
+    .pipeline-badge {
+      position: absolute;
+      top: -12px;
+      left: 24px;
+      background-color: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 6px;
+      color: var(--cyan);
+    }
+    
+    /* Theme Comparison Selector Section */
+    .themes-section {
+      padding: 80px 0;
+    }
+    .themes-header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+    .themes-header h2 {
+      font-size: 36px;
+      margin-bottom: 12px;
+    }
+    .themes-header p {
+      color: var(--text-gray);
+    }
+    
+    .themes-comparison {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 24px;
+    }
+    @media (max-width: 768px) {
+      .themes-comparison {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    .theme-card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-card);
+      border-radius: 16px;
+      padding: 24px;
+      cursor: pointer;
+      transition: var(--transition-base);
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .theme-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+    .theme-card.active {
+      border-color: var(--purple);
+      box-shadow: 0 10px 30px var(--purple-glow);
+    }
+    .theme-card-info h3 {
+      font-size: 16px;
+      margin-bottom: 6px;
+      text-transform: capitalize;
+    }
+    .theme-card-info p {
+      font-size: 12.5px;
+      color: var(--text-gray);
+    }
+    
+    /* Miniature Preview Bars inside theme cards */
+    .mini-vbar {
+      height: 48px;
+      border-radius: 24px;
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      gap: 10px;
+    }
+    
+    /* Features Grid Section */
+    .features {
+      padding: 80px 0;
+      background-color: rgba(0, 0, 0, 0.1);
+    }
+    .features-header {
+      text-align: center;
+      margin-bottom: 56px;
+    }
+    .features-header h2 {
+      font-size: 36px;
+      margin-bottom: 12px;
+    }
+    .features-header p {
+      color: var(--text-gray);
+    }
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 24px;
+    }
+    
+    .feature-card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-card);
+      border-radius: 16px;
+      padding: 32px;
+      transition: var(--transition-base);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .feature-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(255, 255, 255, 0.15);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+    .feature-icon-container {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      background-color: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--cyan);
+    }
+    .feature-card:nth-child(2n) .feature-icon-container {
+      color: var(--purple);
+    }
+    .feature-card:nth-child(3n) .feature-icon-container {
+      color: var(--pink);
+    }
+    .feature-card h3 {
+      font-size: 20px;
+    }
+    .feature-card p {
+      font-size: 14px;
+      color: var(--text-gray);
+    }
+    
+    /* Hotkeys Guide Table */
+    .shortcuts-section {
+      padding: 80px 0;
+    }
+    .shortcuts-header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+    .shortcuts-header h2 {
+      font-size: 36px;
+      margin-bottom: 12px;
+    }
+    .shortcuts-header p {
+      color: var(--text-gray);
+    }
+    
+    .shortcuts-table-container {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-card);
+      border-radius: 16px;
+      overflow: hidden;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+    th, td {
+      padding: 16px 24px;
+      font-size: 14px;
+    }
+    th {
+      background-color: rgba(0,0,0,0.3);
+      font-weight: 600;
+      color: var(--text-white);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    td {
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+      color: var(--text-gray);
+    }
+    tr:last-child td {
+      border-bottom: none;
+    }
+    .kbd-tag {
+      background-color: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 5px;
+      padding: 2px 6px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--text-white);
+    }
+    
+    /* Footer */
+    footer {
+      border-top: 1px solid rgba(255, 255, 255, 0.03);
+      padding: 40px 0;
+      background-color: rgba(0,0,0,0.2);
+    }
+    .footer-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    @media (max-width: 576px) {
+      .footer-content {
+        flex-direction: column;
+        gap: 16px;
+        text-align: center;
+      }
+    }
+    .footer-text {
+      font-size: 13px;
+      color: var(--text-dim);
+    }
+    
+    /* Custom Keyframes */
+    @keyframes ping {
+      0% { transform: scale(1); opacity: 1; }
+      100% { transform: scale(2.2); opacity: 0; }
+    }
+    @keyframes flame-pulse {
+      0% { transform: scale(0.95); opacity: 0.9; }
+      100% { transform: scale(1.15); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation -->
+  <header>
+    <div class="container">
+      <a href="#" class="logo-container">
+        <!-- Exact adaptation of favicon.svg -->
+        <svg class="logo-svg" viewBox="0 0 48 46" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path fill="#863bff" d="M25.946 44.938c-.664.845-2.021.375-2.021-.698V33.937a2.26 2.26 0 0 0-2.262-2.262H10.287c-.92 0-1.456-1.04-.92-1.788l7.48-10.471c1.07-1.497 0-3.578-1.842-3.578H1.237c-.92 0-1.456-1.04-.92-1.788L10.013.474c.214-.297.556-.474.92-.474h28.894c.92 0 1.456 1.04.92 1.788l-7.48 10.471c-1.07 1.498 0 3.579 1.842 3.579h11.377c.943 0 1.473 1.088.89 1.83L25.947 44.94z"/>
+        </svg>
+        <span class="logo-text">TypeBar</span>
+      </a>
+      <nav class="nav-links">
+        <a href="#playground">Playground</a>
+        <a href="#how-it-works">Architecture</a>
+        <a href="#features">Features</a>
+        <a href="#shortcuts">Hotkeys</a>
+        <a href="#download" class="btn-download-sm">Download</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="container hero">
+    <div class="hero-content">
+      <h1>The Floating Smart Typing Assistant</h1>
+      <p>TypeBar is a translucent, always-on-top smart bar that floats right above your taskbar. Re-imagine autocomplete, emoji search, autocorrect, and typing WPM meters across Windows. Zero lag. Infinite flow.</p>
+      
+      <div class="hero-btns">
+        <a href="#download" class="btn-primary">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"></path></svg>
+          Get TypeBar for Windows
+        </a>
+        <a href="#playground" class="btn-secondary">Try Live Sandbox</a>
+      </div>
+      
+      <!-- CLI Box -->
+      <div class="cli-box">
+        <div class="cli-text"><span>$</span> winget install TypeBar</div>
+        <button class="cli-copy" onclick="copyCli()" title="Copy install command">
+          <svg id="copy-icon" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"></path></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Playground Simulator Frame -->
+    <div id="playground" class="simulator-container">
+      <div class="simulator-header">
+        <div class="window-dots">
+          <span class="dot dot-red"></span>
+          <span class="dot dot-yellow"></span>
+          <span class="dot dot-green"></span>
+        </div>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <div style="display: flex; gap: 2px; background: rgba(255,255,255,0.05); padding: 2px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.05);">
+            <button id="btn-tab-sim" class="sim-tab-btn active" onclick="switchTab('sim')">Live Simulator</button>
+            <button id="btn-tab-shot" class="sim-tab-btn" onclick="switchTab('shot')">App Screenshot</button>
+          </div>
+          <select id="target-app" class="target-app-selector" onchange="changeTargetApp()">
+            <option value="VSCode">VSCode</option>
+            <option value="Discord">Discord</option>
+            <option value="Chrome">Chrome</option>
+            <option value="Roblox">Roblox</option>
+            <option value="Desktop">Desktop Window</option>
+          </select>
+        </div>
+      </div>
+      
+      <!-- Mock Editor Pane -->
+      <div class="mock-editor-pane">
+        <!-- Interactive View -->
+        <textarea id="mock-textarea" class="mock-textarea" placeholder="Try typing here! Test autocorrect (e.g. 'teh' or 'dont'), prediction prefixes (e.g. 'deve'), or emoji lookups (e.g. 'fire' or 'happy'). Press Space to finish words. Use Tab, Right Arrow, or F1-F5 keys to autocomplete suggestions."></textarea>
+        
+        <!-- Screenshot Static View -->
+        <div id="mock-screenshot-view" class="mock-screenshot-view">
+          <img src="screenshot.png" alt="TypeBar Windows Application Overlay Screenshot">
+        </div>
+        
+        <!-- Interactive TypeBar (styled with custom CSS themes dynamically) -->
+        <div id="virtual-typebar" class="virtual-typebar vbar-theme-light">
+          <!-- Left: Active app & speed gauge -->
+          <div class="vbar-left">
+            <div id="wpm-gauge-icon" class="wpm-gauge">
+              <!-- Flame Icon -->
+              <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                <path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                <path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+              </svg>
+              <div id="wpm-value" class="wpm-badge">0</div>
+            </div>
+            <div class="vbar-app-det">
+              <span>Target App</span>
+              <span id="vbar-active-app">VSCode</span>
+            </div>
+          </div>
+          
+          <!-- Center: Word Buffer and Suggestions -->
+          <div class="vbar-center">
+            <div id="vbar-buffer-container" class="vbar-buffer" style="display: none;">
+              <!-- Keyboard Icon -->
+              <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="opacity: 0.6; color: var(--t-primary);"><rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect><path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M6 12h.01M18 12h.01M10 12h.01M14 12h.01M7 16h10"></path></svg>
+              <span id="vbar-buffer-text" class="vbar-buffer-text"></span>
+              <span class="vbar-pulse"></span>
+            </div>
+            
+            <!-- Capsules list -->
+            <div id="vbar-capsules" class="vbar-capsules">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+          
+          <!-- Right: Settings gear -->
+          <div class="vbar-right">
+            <button class="settings-trigger" onclick="toggleSettingsPanel()" title="Open TypeBar Settings">
+              <!-- Settings Gear Icon -->
+              <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"></path></svg>
+            </button>
+          </div>
+        </div>
+        
+        <!-- Virtual Settings Overlay Inside Simulator -->
+        <div id="vbar-settings-panel" class="vbar-settings-overlay">
+          <div class="settings-title">
+            <span>TypeBar Settings</span>
+            <button onclick="toggleSettingsPanel()">Close</button>
+          </div>
+          <div class="settings-grid">
+            <div class="setting-item">
+              <span>Auto Correction</span>
+              <label class="switch">
+                <input type="checkbox" id="set-autocorrect" checked onchange="updateSettingsState()">
+                <span class="slider"></span>
+              </label>
+            </div>
+            <div class="setting-item">
+              <span>Word Predictions</span>
+              <label class="switch">
+                <input type="checkbox" id="set-predictions" checked onchange="updateSettingsState()">
+                <span class="slider"></span>
+              </label>
+            </div>
+            <div class="setting-item">
+              <span>Emoji Predictions</span>
+              <label class="switch">
+                <input type="checkbox" id="set-emojis" checked onchange="updateSettingsState()">
+                <span class="slider"></span>
+              </label>
+            </div>
+            <div class="setting-item">
+              <span>Typing Sounds</span>
+              <label class="switch">
+                <input type="checkbox" id="set-sounds" checked onchange="updateSettingsState()">
+                <span class="slider"></span>
+              </label>
+            </div>
+            <div class="setting-item">
+              <span>Frosted Blur</span>
+              <label class="switch">
+                <input type="checkbox" id="set-blur" checked onchange="updateSettingsState()">
+                <span class="slider"></span>
+              </label>
+            </div>
+            <div class="setting-item">
+              <span>Position</span>
+              <select id="set-position" onchange="updateSettingsState()" style="font-size: 8px; background: rgba(128,128,128,0.1); border: none; color: inherit; padding: 2px 4px; border-radius: 4px; outline: none; font-weight: 700;">
+                <option value="bottom">Bottom</option>
+                <option value="top">Top</option>
+              </select>
+            </div>
+          </div>
+          <div class="setting-sliders">
+            <div class="slider-row">
+              <span>Overlay Opacity</span>
+              <input type="range" id="set-opacity" min="0.3" max="1.0" step="0.05" value="0.95" oninput="updateSettingsState()">
+              <span id="opacity-val">95%</span>
+            </div>
+            <div class="slider-row">
+              <span>Animation Speed</span>
+              <input type="range" id="set-speed" min="0.1" max="1.0" step="0.05" value="0.15" oninput="updateSettingsState()">
+              <span id="speed-val">0.15s</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Virtual Keyboard for visual feedback -->
+      <div class="virtual-keyboard">
+        <div class="kb-row">
+          <div class="kb-key" id="key-q">Q</div>
+          <div class="kb-key" id="key-w">W</div>
+          <div class="kb-key" id="key-e">E</div>
+          <div class="kb-key" id="key-r">R</div>
+          <div class="kb-key" id="key-t">T</div>
+          <div class="kb-key" id="key-y">Y</div>
+          <div class="kb-key" id="key-u">U</div>
+          <div class="kb-key" id="key-i">I</div>
+          <div class="kb-key" id="key-o">O</div>
+          <div class="kb-key" id="key-p">P</div>
+        </div>
+        <div class="kb-row">
+          <div class="kb-key" id="key-a">A</div>
+          <div class="kb-key" id="key-s">S</div>
+          <div class="kb-key" id="key-d">D</div>
+          <div class="kb-key" id="key-f">F</div>
+          <div class="kb-key" id="key-g">G</div>
+          <div class="kb-key" id="key-h">H</div>
+          <div class="kb-key" id="key-j">J</div>
+          <div class="kb-key" id="key-k">K</div>
+          <div class="kb-key" id="key-l">L</div>
+        </div>
+        <div class="kb-row">
+          <div class="kb-key tab-key" id="key-tab">Tab</div>
+          <div class="kb-key" id="key-z">Z</div>
+          <div class="kb-key" id="key-x">X</div>
+          <div class="kb-key" id="key-c">C</div>
+          <div class="kb-key" id="key-v">V</div>
+          <div class="kb-key" id="key-b">B</div>
+          <div class="kb-key" id="key-n">N</div>
+          <div class="kb-key" id="key-m">M</div>
+          <div class="kb-key enter-key" id="key-enter">Enter</div>
+        </div>
+        <div class="kb-row">
+          <div class="kb-key space-key" id="key-space">Space</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Architecture Event Flow Pipeline -->
+  <section id="how-it-works" class="pipeline-section">
+    <div class="container">
+      <div class="pipeline-title">
+        <h2>Under the Hood: C# & Electron Bridge</h2>
+        <p>TypeBar uses a hybrid micro-architecture to deliver speed and accessibility at the same time.</p>
+      </div>
+      <div class="pipeline-container">
+        <div class="pipeline-grid">
+          <!-- Card 1 -->
+          <div class="pipeline-node">
+            <span class="pipeline-badge">01. Key Hook</span>
+            <h3>
+              <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect><path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M6 12h.01M18 12h.01M10 12h.01M14 12h.01M7 16h10"></path></svg>
+              Native Win32 C#
+            </h3>
+            <p>A lightweight C# console process registers a low-level Win32 keyboard hook (`SetWindowsHookEx`) to capture and intercept physical keystrokes system-wide. This ensures 0.5ms response time, bypassing standard OS bottlenecks.</p>
+          </div>
+          <!-- Card 2 -->
+          <div class="pipeline-node">
+            <span class="pipeline-badge">02. IPC Streams</span>
+            <h3>
+              <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
+              IPC Bridge
+            </h3>
+            <p>Inter-process communication pipes stream keyboard event data directly into the Electron main thread via standard streams. When hotkeys are intercepted (like `Tab` or `Right Arrow`), they are suppressed in C# so standard apps ignore them while TypeBar selects suggestions.</p>
+          </div>
+          <!-- Card 3 -->
+          <div class="pipeline-node">
+            <span class="pipeline-badge">03. UI Render</span>
+            <h3>
+              <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21V3m0 18a9 9 0 000-18m0 0a9.004 9.004 0 018.716 6.747M12 3a9.004 9.004 0 00-8.716 6.747"></path></svg>
+              React Overlay
+            </h3>
+            <p>An Electron viewport renders the react overlay as a borderless, transparent click-through window positioned above the active desktop workspace. High-performance styling handles frosted glass blur and cyberpunk glowing borders smoothly.</p>
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 16px; background-color: var(--bg-card); padding: 24px; border-radius: 20px; border: 1px solid var(--border-card);">
+          <h3 style="font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: var(--cyan); font-weight: 700; margin-bottom: 8px;">Layer Separation</h3>
+          <img src="hero.png" alt="TypeBar Layered Architecture Diagram" style="max-width: 260px; height: auto; filter: drop-shadow(0 10px 30px var(--purple-glow));">
+          <p style="font-size: 12px; color: var(--text-gray); text-align: center; max-width: 260px; line-height: 1.5; margin-top: 8px;">Visual representation of the smart overlay floating dynamically above document editors and web applications.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Interactive Theme Showcase -->
+  <section class="container themes-section">
+    <div class="themes-header">
+      <h2>Curated Aesthetic Themes</h2>
+      <p>Click on any theme card below to load that theme style onto the Live Playground overlay.</p>
+    </div>
+    <div class="themes-comparison">
+      <!-- Theme 1: Light Mode -->
+      <div id="theme-card-light" class="theme-card active" onclick="selectSimulatorTheme('light')">
+        <div class="mini-vbar vbar-theme-light">
+          <div class="wpm-gauge">
+            <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg>
+          </div>
+          <div class="vbar-app-det">
+            <span style="font-size: 6px; font-weight: 700; color: #4b5563;">Active</span>
+            <span style="font-size: 8px; font-weight: 700; color: #1d1d1f;">Light Mode</span>
+          </div>
+        </div>
+        <div class="theme-card-info">
+          <h3>Frosted Glass Light</h3>
+          <p>Sleek, transparent Mac-style glass. Perfect for crisp morning work sessions and bright editor environments.</p>
+        </div>
+      </div>
+      <!-- Theme 2: Dark Mode -->
+      <div id="theme-card-dark" class="theme-card" onclick="selectSimulatorTheme('dark')">
+        <div class="mini-vbar vbar-theme-dark">
+          <div class="wpm-gauge">
+            <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg>
+          </div>
+          <div class="vbar-app-det">
+            <span style="font-size: 6px; font-weight: 700; color: #9ca3af;">Active</span>
+            <span style="font-size: 8px; font-weight: 700; color: #f5f5f7;">Dark Mode</span>
+          </div>
+        </div>
+        <div class="theme-card-info">
+          <h3>Dark Glass Obsidian</h3>
+          <p>Premium translucent dark slate. Minimizes eye-strain and merges seamlessly with dark themes like VSCode and Discord.</p>
+        </div>
+      </div>
+      <!-- Theme 3: Cyberpunk Mode -->
+      <div id="theme-card-cyberpunk" class="theme-card" onclick="selectSimulatorTheme('cyberpunk')">
+        <div class="mini-vbar vbar-theme-cyberpunk">
+          <div class="wpm-gauge">
+            <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg>
+          </div>
+          <div class="vbar-app-det">
+            <span style="font-size: 6px; font-weight: 700; color: #a855f7;">Active</span>
+            <span style="font-size: 8px; font-weight: 700; color: #00f2fe;">Cyberpunk</span>
+          </div>
+        </div>
+        <div class="theme-card-info">
+          <h3>Cyberpunk Hologram</h3>
+          <p>Neon cyan borders coupled with vibrant magenta hot-spots. Bring retro-futuristic arcade aesthetics straight to your screen.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Grid Section -->
+  <section id="features" class="features">
+    <div class="container">
+      <div class="features-header">
+        <h2>Features Designed for Speed</h2>
+        <p>Built from the ground up for high-performance typists and gamers.</p>
+      </div>
+      <div class="features-grid">
+        <!-- Feature 1 -->
+        <div class="feature-card">
+          <div class="feature-icon-container">
+            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+          </div>
+          <h3>Typo Auto-Correction</h3>
+          <p>Instantly corrects accidental slips like 'teh' to 'the' or 'dont' to 'don't'. Runs on-the-fly and seamlessly replaces characters in your target apps.</p>
+        </div>
+        <!-- Feature 2 -->
+        <div class="feature-card">
+          <div class="feature-icon-container">
+            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+          </div>
+          <h3>Smart Word Completion</h3>
+          <p>Predicts words dynamically before you finish typing. Powered by a tech-aware lexicography dictionary matching prefix patterns.</p>
+        </div>
+        <!-- Feature 3 -->
+        <div class="feature-card">
+          <div class="feature-icon-container">
+            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          </div>
+          <h3>Adaptive Emoji Lookup</h3>
+          <p>No more hunting through system emoji grids. Simply start typing words like 'happy', 'fire', 'dog', or 'money' and immediately tab in matching emojis.</p>
+        </div>
+        <!-- Feature 4 -->
+        <div class="feature-card">
+          <div class="feature-icon-container">
+            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path></svg>
+          </div>
+          <h3>Mechanical Click Synthesis</h3>
+          <p>Enjoy acoustic feedback using synthesizers modulated inside Web Audio APIs. Simulates crisp mechanical switch clicks with every stroke.</p>
+        </div>
+        <!-- Feature 5 -->
+        <div class="feature-card">
+          <div class="feature-icon-container">
+            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg>
+          </div>
+          <h3>Active App Detection</h3>
+          <p>Identifies active windows automatically (VSCode, Discord, Chrome, Roblox). Resets buffer logs dynamically when jumping processes to ensure context clarity.</p>
+        </div>
+        <!-- Feature 6 -->
+        <div class="feature-card">
+          <div class="feature-icon-container">
+            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path></svg>
+          </div>
+          <h3>Tray Configurator</h3>
+          <p>Adjust window transparency, blur, custom hotkeys, layout positions, and speed rates easily via the expanded native settings drawer.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Keyboard Shortcuts Cheat Sheet -->
+  <section id="shortcuts" class="container shortcuts-section">
+    <div class="shortcuts-header">
+      <h2>Keyboard Hotkeys & Controls</h2>
+      <p>Take full advantage of TypeBar layout controls without taking your hands off the keyboard.</p>
+    </div>
+    <div class="shortcuts-table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Action</th>
+            <th>Shortcut Binding</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Toggle Visibility</td>
+            <td><span class="kbd-tag">Ctrl</span> + <span class="kbd-tag">Alt</span> + <span class="kbd-tag">S</span></td>
+            <td>Briefly show or hide the overlay layout on your screen.</td>
+          </tr>
+          <tr>
+            <td>Accept First Suggestion</td>
+            <td><span class="kbd-tag">Tab</span> or <span class="kbd-tag">F1</span></td>
+            <td>Inserts the auto-correct or first prediction capsule.</td>
+          </tr>
+          <tr>
+            <td>Accept Second Suggestion</td>
+            <td><span class="kbd-tag">Right Arrow</span> or <span class="kbd-tag">F2</span></td>
+            <td>Inserts the second prediction capsule.</td>
+          </tr>
+          <tr>
+            <td>Select Capsule (3 - 5)</td>
+            <td><span class="kbd-tag">F3</span> · <span class="kbd-tag">F4</span> · <span class="kbd-tag">F5</span></td>
+            <td>Selects the third, fourth, or fifth capsule respectively.</td>
+          </tr>
+          <tr>
+            <td>Quick Phrase Templates</td>
+            <td><span class="kbd-tag">F1</span> to <span class="kbd-tag">F5</span> (When buffer empty)</td>
+            <td>Inserts quick templates like 'wsg', 'help', 'ggs'.</td>
+          </tr>
+          <tr>
+            <td>Emergency Deactivation</td>
+            <td><span class="kbd-tag">Ctrl</span> + <span class="kbd-tag">Alt</span> + <span class="kbd-tag">Shift</span></td>
+            <td>Immediately kills keyboard hooks if app hangs.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Download Call-to-action Section -->
+  <section id="download" style="padding: 100px 0; text-align: center; background: radial-gradient(circle, var(--purple-glow) 0%, transparent 60%);">
+    <div class="container" style="max-width: 600px; display: flex; flex-direction: column; gap: 24px; align-items: center;">
+      <h2 style="font-size: 40px; line-height: 1.2;">Ready to Upgrade Your Typing Flow?</h2>
+      <p style="color: var(--text-gray); font-size: 16px;">Download TypeBar today. Requires Windows 10 or 11. Lightweight package with zero telemetry.</p>
+      
+      <div style="display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; margin-top: 12px;">
+        <a href="#" class="btn-primary" style="padding: 16px 36px;">
+          Download Installer (.msi)
+        </a>
+        <a href="#" class="btn-secondary" style="padding: 16px 36px;">
+          Download Portable (.exe)
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container footer-content">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <svg class="logo-svg" viewBox="0 0 48 46" fill="none" xmlns="http://www.w3.org/2000/svg" style="width: 24px; height: 24px;">
+          <path fill="#863bff" d="M25.946 44.938c-.664.845-2.021.375-2.021-.698V33.937a2.26 2.26 0 0 0-2.262-2.262H10.287c-.92 0-1.456-1.04-.92-1.788l7.48-10.471c1.07-1.497 0-3.578-1.842-3.578H1.237c-.92 0-1.456-1.04-.92-1.788L10.013.474c.214-.297.556-.474.92-.474h28.894c.92 0 1.456 1.04.92 1.788l-7.48 10.471c-1.07 1.498 0 3.579 1.842 3.579h11.377c.943 0 1.473 1.088.89 1.83L25.947 44.94z"/>
+        </svg>
+        <span class="footer-text" style="font-weight: 700; color: var(--text-white);">TypeBar</span>
+      </div>
+      <span class="footer-text">© 2026 TypeBar. Open Source under MIT License. Built with C# and React.</span>
+    </div>
+  </footer>
+
+  <!-- Simulation Script -->
+  <script>
+    // Copy winget command
+    function copyCli() {
+      const command = "winget install TypeBar";
+      navigator.clipboard.writeText(command);
+      
+      const copyIcon = document.getElementById("copy-icon");
+      copyIcon.innerHTML = `<path d="M20 6L9 17l-5-5"></path>`;
+      copyIcon.setAttribute("stroke", "#00f2fe");
+      
+      setTimeout(() => {
+        copyIcon.innerHTML = `<rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"></path>`;
+        copyIcon.setAttribute("stroke", "currentColor");
+      }, 2000);
+    }
+
+    // ----------------------------------------------------
+    // PREDICTION ENGINE MOCKUP
+    // ----------------------------------------------------
+    const DICTIONARY = [
+      "the", "of", "to", "and", "a", "in", "is", "it", "you", "that", "he", "was", "for", "on", "are", "as", "with", "his", "they", "i", 
+      "at", "be", "this", "have", "from", "or", "one", "had", "by", "word", "but", "not", "what", "all", "were", "we", "when", "your", 
+      "can", "said", "there", "use", "an", "each", "which", "she", "do", "how", "their", "if", "will", "up", "other", "about", "out", 
+      "many", "then", "them", "these", "so", "some", "her", "would", "make", "like", "him", "into", "time", "has", "look", "two", 
+      "more", "write", "go", "see", "number", "no", "way", "could", "people", "my", "than", "first", "water", "been", "call", "who", 
+      "its", "now", "find", "long", "down", "day", "did", "get", "come", "made", "may", "part", "over", "new", "sound", 
+      "take", "only", "little", "work", "know", "place", "year", "live", "me", "back", "give", "most", "very", "after", "thing", 
+      "our", "just", "name", "good", "sentence", "man", "think", "say", "great", "where", "help", "through", "much", "before", 
+      "line", "right", "too", "mean", "old", "any", "same", "tell", "boy", "follow", "came", "want", "show", "also", "around", 
+      "form", "three", "small", "set", "end", "another", "large", "must", "big", "even", "such", "because", "turn", "here", 
+      "why", "ask", "went", "men", "read", "need", "land", "different", "home", "us", "move", "try", "kind", "hand", "picture", 
+      "again", "change", "off", "play", "spell", "air", "away", "animal", "house", "point", "page", "letter", "mother", "answer", 
+      "found", "study", "still", "learn", "should", "world", "high", "every", "near", "add", "food", "between", "own", 
+      "below", "country", "plant", "last", "school", "father", "keep", "tree", "never", "start", "city", "earth", "eye", "light", 
+      "thought", "head", "under", "story", "saw", "left", "few", "while", "along", "might", "close", "something", "seem", "next", 
+      "hard", "open", "example", "begin", "life", "always", "those", "both", "paper", "together", "got", "group", "often", "run", 
+      "important", "until", "children", "side", "feet", "car", "mile", "night", "walk", "white", "sea", "pattern", "grow", "took", 
+      "river", "four", "state", "once", "book", "hear", "stop", "without", "second", "late", "carry", "later", "miss", "idea", 
+      "enough", "eat", "face", "watch", "far", "really", "almost", "let", "above", "girl", "sometimes", "mountain", "cut", "young", 
+      "talk", "soon", "list", "song", "being", "leave", "family", "it's", "program", "developer", "software", "application", "system", 
+      "windows", "computer", "keyboard", "typing", "screen", "game", "roblox", "discord", "chrome", "vscode", "react", "electron", 
+      "tailwind", "css", "html", "javascript", "typescript", "function", "const", "class", "import", "export", "let", "return", 
+      "await", "async", "promise", "object", "array", "string", "number", "boolean", "null", "undefined", "project", "design", 
+      "beautiful", "premium", "futuristic", "sleek", "modern", "animated", "dynamic", "island", "touchbar", "glassmorphism"
+    ];
+
+    const AUTOCORRECT_MAP = {
+      "teh": "the",
+      "recieve": "receive",
+      "recieved": "received",
+      "dont": "don't",
+      "cant": "can't",
+      "wont": "won't",
+      "yuo": "you",
+      "taht": "that",
+      "tiem": "time",
+      "whit": "with",
+      "becuase": "because",
+      "definately": "definitely",
+      "seperate": "separate",
+      "goverment": "government",
+      "occured": "occurred",
+      "untill": "until",
+      "truely": "truly",
+      "wierd": "weird",
+      "acheive": "achieve",
+      "alot": "a lot",
+      "tommorrow": "tomorrow",
+      "suprise": "surprise",
+      "beleive": "believe",
+      "gonna": "going to",
+      "wanna": "want to",
+      "im": "I'm",
+      "id": "I'd",
+      "ive": "I've",
+      "ill": "I'll",
+      "theyre": "they're",
+      "youre": "you're",
+      "weve": "we've",
+      "shouldnt": "shouldn't",
+      "couldnt": "couldn't",
+      "wouldnt": "wouldn't",
+      "isnt": "isn't",
+      "arent": "aren't",
+      "wasnt": "wasn't",
+      "werent": "weren't",
+      "hasnt": "hasn't",
+      "havent": "haven't",
+      "hadnt": "hadn't",
+      "doesnt": "doesn't",
+      "didnt": "didn't",
+      "thats": "that's",
+      "whats": "what's",
+      "wheres": "where's",
+      "whys": "why's",
+      "hows": "how's",
+      "theres": "there's",
+      "itsa": "it's a",
+      "programing": "programming",
+      "developement": "development",
+      "libary": "library",
+      "enviroment": "environment",
+      "posibility": "possibility",
+      "neccessary": "necessary",
+      "unneccessary": "unnecessary",
+      "arguement": "argument",
+      "existance": "existence"
+    };
+
+    const EMOJI_DICTIONARY = {
+      happy: ['😊', '😀', '😁', '🥳'],
+      smile: ['😊', '😀', '🙂'],
+      sad: ['😢', '😭', '🥺', '😔', '💔'],
+      cry: ['😢', '😭', '🥺'],
+      fire: ['🔥', '⚡', '💥', '💯'],
+      hot: ['🔥', '🥵', '☀️'],
+      cool: ['😎', '🤙', '🥶', '❄️'],
+      ice: ['❄️', '🥶', '🧊'],
+      heart: ['❤️', '💖', '💝', '💙', '💜'],
+      love: ['❤️', '💖', '😍', '😘'],
+      like: ['👍', '❤️', '👏'],
+      thumbs: ['👍', '👎', '👊'],
+      ok: ['👌', '👍', '✅'],
+      cat: ['🐱', '🐈', '😸'],
+      dog: ['🐶', '🐕', '🐩'],
+      lol: ['😂', '🤣', '😆'],
+      haha: ['😂', '😀', '😆'],
+      star: ['⭐', '✨', '🌟'],
+      yes: ['✅', '✔️', '👍'],
+      no: ['❌', '✖️', '👎'],
+      rocket: ['🚀', '🛸'],
+      space: ['🌌', '🚀', '🪐'],
+      party: ['🎉', '🥳', '🎈'],
+      beer: ['🍺', '🍻'],
+      coffee: ['☕', '🍵', '🧋'],
+      game: ['🎮', '🕹️', '👾'],
+      play: ['🎮', '▶️', '⚽'],
+      computer: ['💻', '🖥️', '⌨️'],
+      code: ['💻', '⚙️', '👾'],
+      phone: ['📱', '📞'],
+      car: ['🚗', '🏎️', '🚙'],
+      sun: ['☀️', '🌤️'],
+      moon: ['🌙', '🌕'],
+      cloud: ['☁️', '🌧️', '⛈️'],
+      rain: ['🌧️', '☔'],
+      skull: ['💀', '☠️'],
+      work: ['💼', '💻', '🛠️'],
+      build: ['🛠️', '🔨'],
+      tool: ['🛠️', '🔧']
+    };
+
+    const QUICK_TEMPLATES = ["wsg", "help", "low", "come here", "ggs"];
+
+    // Levenshtein Distance
+    function getLevenshteinDistance(a, b) {
+      const matrix = [];
+      for (let i = 0; i <= b.length; i++) matrix[i] = [i];
+      for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
+      for (let i = 1; i <= b.length; i++) {
+        for (let j = 1; j <= a.length; j++) {
+          if (b.charAt(i - 1) === a.charAt(j - 1)) {
+            matrix[i][j] = matrix[i - 1][j - 1];
+          } else {
+            matrix[i][j] = Math.min(
+              matrix[i - 1][j - 1] + 1,
+              Math.min(matrix[i][j - 1] + 1, matrix[i - 1][j] + 1)
+            );
+          }
+        }
+      }
+      return matrix[b.length][a.length];
+    }
+
+    // Get suggestions
+    function querySuggestions(word) {
+      const original = word.trim().toLowerCase();
+      if (!original) return { original, predictions: [], emojis: [], autocorrect: undefined };
+
+      let autocorrect = undefined;
+      let predictions = [];
+      let emojis = [];
+
+      // 1. Emojis
+      if (settingsState.emojis) {
+        if (EMOJI_DICTIONARY[original]) {
+          emojis.push(...EMOJI_DICTIONARY[original]);
+        } else {
+          for (const [key, icons] of Object.entries(EMOJI_DICTIONARY)) {
+            if (key.startsWith(original)) {
+              emojis.push(...icons);
+              if (emojis.length >= 4) break;
+            }
+          }
+        }
+        emojis = Array.from(new Set(emojis)).slice(0, 4);
+      }
+
+      // 2. Autocorrect
+      if (settingsState.autoCorrect) {
+        if (AUTOCORRECT_MAP[original]) {
+          autocorrect = AUTOCORRECT_MAP[original];
+        } else if (original.length >= 4 && !DICTIONARY.includes(original)) {
+          for (const dictWord of DICTIONARY) {
+            if (Math.abs(dictWord.length - original.length) <= 1) {
+              const distance = getLevenshteinDistance(original, dictWord);
+              if (distance === 1) {
+                autocorrect = dictWord;
+                break;
+              }
+            }
+          }
+        }
+      }
+
+      // 3. Predictions
+      if (settingsState.predictions) {
+        const matches = DICTIONARY.filter(w => w.startsWith(original) && w !== original);
+        predictions = matches.slice(0, 4);
+        if (predictions.length < 3 && autocorrect) {
+          predictions.unshift(autocorrect);
+        }
+      }
+      predictions = Array.from(new Set(predictions.filter(p => p !== original))).slice(0, 4);
+
+      return { original, autocorrect, predictions, emojis };
+    }
+
+    // ----------------------------------------------------
+    // SIMULATOR STATE & INTEGRATION
+    // ----------------------------------------------------
+    let settingsState = {
+      autoCorrect: true,
+      predictions: true,
+      emojis: true,
+      soundEffects: true,
+      blurEffects: true,
+      theme: 'light',
+      opacity: 0.95,
+      animationSpeed: 0.15,
+      position: 'bottom'
+    };
+
+    let typingTimestamps = [];
+    let currentBuffer = "";
+    let activeSuggestions = [];
+
+    const mockTextarea = document.getElementById('mock-textarea');
+    const screenshotView = document.getElementById('mock-screenshot-view');
+    const virtualTypebar = document.getElementById('virtual-typebar');
+    const settingsPanel = document.getElementById('vbar-settings-panel');
+    const wpmGaugeIcon = document.getElementById('wpm-gauge-icon');
+    const wpmValue = document.getElementById('wpm-value');
+    const activeAppText = document.getElementById('vbar-active-app');
+    const bufferContainer = document.getElementById('vbar-buffer-container');
+    const bufferText = document.getElementById('vbar-buffer-text');
+    const capsulesContainer = document.getElementById('vbar-capsules');
+
+    // Tab switcher (Live Sim vs Screenshot)
+    function switchTab(mode) {
+      const btnSim = document.getElementById('btn-tab-sim');
+      const btnShot = document.getElementById('btn-tab-shot');
+      
+      if (mode === 'shot') {
+        screenshotView.style.display = 'flex';
+        mockTextarea.style.display = 'none';
+        virtualTypebar.style.display = 'none';
+        settingsPanel.style.display = 'none';
+        btnSim.classList.remove('active');
+        btnShot.classList.add('active');
+      } else {
+        screenshotView.style.display = 'none';
+        mockTextarea.style.display = 'block';
+        virtualTypebar.style.display = 'flex';
+        btnSim.classList.add('active');
+        btnShot.classList.remove('active');
+      }
+    }
+
+    // UI Updates based on Settings State
+    function applySettings() {
+      // 1. Position
+      if (settingsState.position === 'top') {
+        virtualTypebar.style.bottom = 'auto';
+        virtualTypebar.style.top = '16px';
+        settingsPanel.style.top = 'auto';
+        settingsPanel.style.bottom = '16px';
+      } else {
+        virtualTypebar.style.top = 'auto';
+        virtualTypebar.style.bottom = '16px';
+        settingsPanel.style.bottom = 'auto';
+        settingsPanel.style.top = '16px';
+      }
+
+      // 2. Opacity
+      virtualTypebar.style.opacity = settingsState.opacity;
+
+      // 3. Animation Speed
+      virtualTypebar.style.transitionDuration = `${settingsState.animationSpeed}s`;
+
+      // 4. Blur Effects
+      if (settingsState.blurEffects) {
+        virtualTypebar.style.backdropFilter = "blur(18px)";
+        virtualTypebar.style.webkitBackdropFilter = "blur(18px)";
+      } else {
+        virtualTypebar.style.backdropFilter = "none";
+        virtualTypebar.style.webkitBackdropFilter = "none";
+      }
+
+      // 5. Theme classes
+      virtualTypebar.className = `virtual-typebar vbar-theme-${settingsState.theme}`;
+      settingsPanel.className = `vbar-settings-overlay vbar-theme-${settingsState.theme}`;
+    }
+
+    // Toggle Settings Panel Drawer
+    function toggleSettingsPanel() {
+      if (settingsPanel.style.display === 'flex') {
+        settingsPanel.style.display = 'none';
+      } else {
+        settingsPanel.style.display = 'flex';
+      }
+    }
+
+    // Read form inputs and sync with Settings State
+    function updateSettingsState() {
+      settingsState.autoCorrect = document.getElementById('set-autocorrect').checked;
+      settingsState.predictions = document.getElementById('set-predictions').checked;
+      settingsState.emojis = document.getElementById('set-emojis').checked;
+      settingsState.soundEffects = document.getElementById('set-sounds').checked;
+      settingsState.blurEffects = document.getElementById('set-blur').checked;
+      settingsState.position = document.getElementById('set-position').value;
+      
+      const rawOpacity = parseFloat(document.getElementById('set-opacity').value);
+      settingsState.opacity = rawOpacity;
+      document.getElementById('opacity-val').innerText = `${Math.round(rawOpacity * 100)}%`;
+
+      const rawSpeed = parseFloat(document.getElementById('set-speed').value);
+      settingsState.animationSpeed = rawSpeed;
+      document.getElementById('speed-val').innerText = `${rawSpeed}s`;
+
+      applySettings();
+      updateSuggestionsList();
+    }
+
+    // App Switcher
+    function changeTargetApp() {
+      const app = document.getElementById('target-app').value;
+      settingsState.targetApp = app;
+      activeAppText.innerText = app;
+      
+      // Clear buffer on app change exactly like real code
+      currentBuffer = "";
+      mockTextarea.value = "";
+      updateSuggestionsList();
+    }
+
+    // Switch theme from theme comparison cards
+    function selectSimulatorTheme(theme) {
+      settingsState.theme = theme;
+      applySettings();
+
+      // Highlight card active state
+      document.querySelectorAll('.theme-card').forEach(card => card.classList.remove('active'));
+      document.getElementById(`theme-card-${theme}`).classList.add('active');
+    }
+
+    // Web Audio Synthesizer for Mechanical switches
+    let audioCtx = null;
+    function playClickSound() {
+      if (!settingsState.soundEffects) return;
+      try {
+        if (!audioCtx) {
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+        const ctx = audioCtx;
+        
+        // low organic keyboard thud
+        const osc = ctx.createOscillator();
+        const gainOsc = ctx.createGain();
+        osc.connect(gainOsc);
+        gainOsc.connect(ctx.destination);
+        
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(380 + Math.random() * 120, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(70, ctx.currentTime + 0.035);
+        
+        gainOsc.gain.setValueAtTime(0.012, ctx.currentTime);
+        gainOsc.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.035);
+        
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.035);
+        
+        // noise click snap
+        const bufferSize = ctx.sampleRate * 0.015; // 15ms buffer
+        const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+          data[i] = Math.random() * 2 - 1;
+        }
+        
+        const noise = ctx.createBufferSource();
+        noise.buffer = buffer;
+        
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.value = 1700 + Math.random() * 300;
+        filter.Q.value = 3.5;
+        
+        const gainNoise = ctx.createGain();
+        gainNoise.gain.setValueAtTime(0.005, ctx.currentTime);
+        gainNoise.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.012);
+        
+        noise.connect(filter);
+        filter.connect(gainNoise);
+        gainNoise.connect(ctx.destination);
+        
+        noise.start(ctx.currentTime);
+        noise.stop(ctx.currentTime + 0.015);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    // Capture word buffer and calculate WPM
+    mockTextarea.addEventListener('keydown', (e) => {
+      // Highlight physical keys on virtual keyboard
+      let visualKey = e.key.toLowerCase();
+      if (e.code === 'Space') visualKey = 'space';
+      if (e.key === 'Tab') visualKey = 'tab';
+      if (e.key === 'Enter') visualKey = 'enter';
+      
+      const keyEl = document.getElementById(`key-${visualKey}`);
+      if (keyEl) {
+        keyEl.classList.add('key-active');
+        setTimeout(() => keyEl.classList.remove('key-active'), 120);
+      }
+
+      // Play switch sound
+      playClickSound();
+
+      // Intercept navigation for Autocomplete using Tab, Right arrow, and F1-F5
+      const activeWord = getActiveWord();
+      if (activeWord && activeSuggestions.length > 0) {
+        if (e.key === 'Tab') {
+          e.preventDefault();
+          acceptSuggestion(activeSuggestions[0]);
+          return;
+        }
+        if (e.key === 'ArrowRight') {
+          e.preventDefault();
+          acceptSuggestion(activeSuggestions[1] || activeSuggestions[0]);
+          return;
+        }
+      }
+
+      // Record WPM typing speed timestamps
+      const now = Date.now();
+      typingTimestamps.push(now);
+      calculateWPM();
+    });
+
+    mockTextarea.addEventListener('input', () => {
+      updateSuggestionsList();
+    });
+
+    // Helper: extract active typed word prefix preceding cursor position
+    function getActiveWord() {
+      const text = mockTextarea.value;
+      const cursor = mockTextarea.selectionStart;
+      const textBeforeCursor = text.slice(0, cursor);
+      // match word ending letters/apostrophe
+      const match = textBeforeCursor.match(/([a-zA-Z0-9']+)$/);
+      return match ? match[1] : "";
+    }
+
+    // Accept suggestion capsule action
+    function acceptSuggestion(suggestion) {
+      if (!suggestion) return;
+      const text = mockTextarea.value;
+      const cursor = mockTextarea.selectionStart;
+      const textBeforeCursor = text.slice(0, cursor);
+      const textAfterCursor = text.slice(cursor);
+      
+      // Match active word and replace it
+      const match = textBeforeCursor.match(/([a-zA-Z0-9']+)$/);
+      if (match) {
+        const replaceStartIndex = cursor - match[1].length;
+        const newBefore = text.slice(0, replaceStartIndex) + suggestion + " ";
+        mockTextarea.value = newBefore + textAfterCursor;
+        const newCursorPos = newBefore.length;
+        mockTextarea.setSelectionRange(newCursorPos, newCursorPos);
+      } else {
+        // Fallback: append
+        mockTextarea.value = textBeforeCursor + suggestion + " " + textAfterCursor;
+      }
+      mockTextarea.focus();
+      updateSuggestionsList();
+      playClickSound();
+    }
+
+    // Refresh Suggestions and UI capsules
+    function updateSuggestionsList() {
+      const activeWord = getActiveWord();
+      currentBuffer = activeWord;
+      
+      capsulesContainer.innerHTML = "";
+      activeSuggestions = [];
+
+      if (currentBuffer) {
+        // Show active buffer tag
+        bufferContainer.style.display = "flex";
+        bufferText.innerText = currentBuffer;
+
+        const res = querySuggestions(currentBuffer);
+
+        // Autocorrect Priority
+        if (res.autocorrect) {
+          activeSuggestions.push(res.autocorrect);
+          createCapsule(res.autocorrect, true, "Tab · F1");
+        }
+
+        // Predictions list
+        res.predictions.forEach((pred, i) => {
+          if (!activeSuggestions.includes(pred)) {
+            activeSuggestions.push(pred);
+            const shortcutNum = activeSuggestions.length;
+            const shortcutText = shortcutNum === 2 ? "→ · F2" : `F${shortcutNum}`;
+            createCapsule(pred, false, shortcutText);
+          }
+        });
+
+        // Emojis lookup list
+        res.emojis.forEach((emoji) => {
+          activeSuggestions.push(emoji);
+          createCapsule(emoji, false, undefined);
+        });
+
+      } else {
+        // Hide buffer tag
+        bufferContainer.style.display = "none";
+        
+        // Show F1-F5 quick templates
+        QUICK_TEMPLATES.forEach((phrase, idx) => {
+          createCapsule(phrase, false, `F${idx + 1}`);
+        });
+      }
+    }
+
+    // Render capsule elements inside the bar
+    function createCapsule(text, isAutocorrect = false, shortcut = "") {
+      const capsule = document.createElement('div');
+      capsule.className = `capsule ${isAutocorrect ? 'autocorrect-capsule' : ''}`;
+      capsule.onclick = () => acceptSuggestion(text);
+      
+      capsule.innerHTML = `<span class="capsule-text">${text}</span>`;
+      
+      if (shortcut) {
+        capsule.innerHTML += `<label class="capsule-shortcut">${shortcut}</label>`;
+      }
+      
+      capsulesContainer.appendChild(capsule);
+    }
+
+    // WPM math speed checker
+    function calculateWPM() {
+      const now = Date.now();
+      typingTimestamps = typingTimestamps.filter(t => now - t < 5000);
+      
+      if (typingTimestamps.length < 2) return;
+      
+      // 5 characters = 1 word
+      const words = typingTimestamps.length / 5;
+      const wpmVal = Math.round(words * 12); // Extrapolate to 1 min
+      const finalWpm = Math.min(wpmVal, 200);
+
+      wpmValue.innerText = finalWpm;
+
+      // Animate flame WPM icon on fast typing
+      if (finalWpm > 45) {
+        wpmGaugeIcon.classList.add('flaming');
+      } else {
+        wpmGaugeIcon.classList.remove('flaming');
+      }
+    }
+
+    // Set simulator on load
+    applySettings();
+    updateSuggestionsList();
+  </script>
+</body>
+</html>
